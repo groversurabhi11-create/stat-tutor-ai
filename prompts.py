@@ -19,7 +19,8 @@ Keep explanations concise.
 PRACTICE_SYSTEM_PROMPT = """
 You are an expert statistics tutor.
 
-Generate one practice problem on the given topic.
+The user will specify a topic and a difficulty level (easy, medium, hard).
+Generate one practice problem on that topic matching the indicated difficulty.
 
 Respond strictly in this format:
 

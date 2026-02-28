@@ -21,6 +21,7 @@ class ExplainRequest(BaseModel):
 
 class PracticeRequest(BaseModel):
     topic: str
+    difficulty: str  # e.g. "easy", "medium", "hard"
 
 class EvaluateRequest(BaseModel):
     topic: str
@@ -85,6 +86,7 @@ def evaluate_topic(request: EvaluateRequest):
 
 @app.post("/practice")
 def practice_topic(request: PracticeRequest):
+    # include difficulty when asking the model
     response = client.chat.completions.create(
         model="llama-3.1-8b-instant",
         messages=[
@@ -94,7 +96,14 @@ def practice_topic(request: PracticeRequest):
             },
             {
                 "role": "user",
-                "content": f"Generate one practice problem on {request.topic}."
+                "content": (
+                    f"""Generate one {request.difficulty} practice problem on {request.topic}. 
+                    Difficulty guidelines:
+                    - easy: basic definition or direct formula application
+                    - medium: multi-step calculation or interpretation
+                    - hard: conceptual reasoning or combined concepts
+                    Follow the required format strictly."""
+                )
             }
         ],
         temperature=0.4
