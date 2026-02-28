@@ -1,10 +1,11 @@
 # Create a minimal FastAPI app with a root endpoint that returns a welcome message
 
-import os
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+import os
 from dotenv import load_dotenv
 from openai import OpenAI
+from prompts import EVALUATE_SYSTEM_PROMPT, EXPLAIN_SYSTEM_PROMPT, PRACTICE_SYSTEM_PROMPT
 import uvicorn
 app = FastAPI()
 
@@ -12,10 +13,19 @@ app = FastAPI()
 def read_root():
     return {"message": "Welcome to the FastAPI app!"}
 
-# Create a Pydantic Model called ExplainRequest which takes a single field called topic which is a string.
+# Define separate Pydantic models for explain and practice requests.
 from pydantic import BaseModel
+
 class ExplainRequest(BaseModel):
     topic: str
+
+class PracticeRequest(BaseModel):
+    topic: str
+
+class EvaluateRequest(BaseModel):
+    topic: str
+    question: str
+    answer: str
 
 # Load environment variables
 load_dotenv()
@@ -34,25 +44,7 @@ def explain_topic(request: ExplainRequest):
         messages=[
             {
                 "role": "system",
-                "content": """
-            You are an expert statistics tutor.
-
-            Always respond strictly in the following format:
-
-            Definition:
-            (Provide a clear and precise definition.)
-
-            Intuition:
-            (Explain the intuition in simple language.)
-
-            Example:
-            (Give one small numerical example if applicable.)
-
-            Do not add extra sections.
-            Do not add conclusions.
-            Do not add key takeaways.
-            Keep explanations concise and clear.
-            """
+                "content": EXPLAIN_SYSTEM_PROMPT
             },
             {
                 "role": "user",
@@ -64,4 +56,50 @@ def explain_topic(request: ExplainRequest):
 
     return {
         "explanation": response.choices[0].message.content
+    }
+
+@app.post("/evaluate")
+def evaluate_topic(request: EvaluateRequest):
+    response = client.chat.completions.create(
+        model="llama-3.1-8b-instant",
+        messages=[
+            {
+                "role": "system",
+                "content": EVALUATE_SYSTEM_PROMPT
+            },
+            {
+                "role": "user",
+                "content": (
+                    f"Topic: {request.topic}\n"
+                    f"Question: {request.question}\n"
+                    f"Student Answer: {request.answer}"
+                )
+            }
+        ],
+        temperature=0.2
+    )
+
+    return {
+        "evaluation": response.choices[0].message.content
+    }
+
+@app.post("/practice")
+def practice_topic(request: PracticeRequest):
+    response = client.chat.completions.create(
+        model="llama-3.1-8b-instant",
+        messages=[
+            {
+                "role": "system",
+                "content": PRACTICE_SYSTEM_PROMPT
+            },
+            {
+                "role": "user",
+                "content": f"Generate one practice problem on {request.topic}."
+            }
+        ],
+        temperature=0.4
+    )
+
+    return {
+        "problem": response.choices[0].message.content
     }
