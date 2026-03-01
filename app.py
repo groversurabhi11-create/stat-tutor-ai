@@ -24,9 +24,9 @@ class PracticeRequest(BaseModel):
     difficulty: str  # e.g. "easy", "medium", "hard"
 
 class EvaluateRequest(BaseModel):
-    topic: str
     question: str
-    answer: str
+    student_answer: str
+    correct_answer: str
 
 # Load environment variables
 load_dotenv()
@@ -71,17 +71,24 @@ def evaluate_topic(request: EvaluateRequest):
             {
                 "role": "user",
                 "content": (
-                    f"Topic: {request.topic}\n"
                     f"Question: {request.question}\n"
-                    f"Student Answer: {request.answer}"
+                    f"Student Answer: {request.student_answer}"
+                    f"Correct Answer: {request.correct_answer}\n"
                 )
             }
         ],
-        temperature=0.2
+        temperature=0
     )
 
+    # parse JSON string so Swagger shows formatted output
+    import json
+    try:
+        evaluation_json = json.loads(response.choices[0].message.content)
+    except Exception:
+        evaluation_json = {"raw": response.choices[0].message.content}
+
     return {
-        "evaluation": response.choices[0].message.content
+        "evaluation": evaluation_json
     }
 
 @app.post("/practice")
