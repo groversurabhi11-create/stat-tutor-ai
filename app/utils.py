@@ -14,10 +14,11 @@ def parse_json_safe(content: str):
         return {"raw": content}
 
 
-def handle_llm_error(exc: Exception) -> HTTPException:
-    """Convert an arbitrary exception into a 500-style HTTPException.
+def handle_llm_error(exc: Exception) -> dict:
+    """Convert an arbitrary exception into a simple error dict.
 
-    Routes can raise the returned exception to keep error handling
-    consistent.
+    The caller can include the returned value in a JSON response body.
+    This keeps the API from raising HTTPException so that every route
+    can return the same {success,data,error} envelope.
     """
-    return HTTPException(status_code=500, detail=str(exc))
+    return {"error": str(exc)}
