@@ -27,7 +27,27 @@ def practice_topic(request: PracticeRequest):
     if isinstance(result, dict) and "error" in result:
         return {"success": False, "data": None, "error": result["error"]}
 
-    return {"success": True, "data": {"problem": result}, "error": None}
+    # Parse the model output into a question + correct answer pair.
+    question = result
+    correct_answer = ""
+    if "Question:" in result and "Answer:" in result:
+        try:
+            _, rest = result.split("Question:", 1)
+            q_part, a_part = rest.split("Answer:", 1)
+            question = q_part.strip()
+            correct_answer = a_part.strip()
+        except Exception:
+            question = result
+            correct_answer = ""
+
+    return {
+        "success": True,
+        "data": {
+            "question": question,
+            "correct_answer": correct_answer,
+        },
+        "error": None,
+    }
 
 
 @router.post("/evaluate")
