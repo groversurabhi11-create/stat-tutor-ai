@@ -92,3 +92,4 @@ with tab3:
 
                 st.write(f"Attempts: {st.session_state.attempts}")
                 st.write(f"Score: {st.session_state.score}")
+                st.rerun()
